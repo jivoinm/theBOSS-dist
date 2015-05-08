@@ -278,7 +278,7 @@ exports.loadOrdersByStatusAndPeriod = function (req, res){
 
     queryOrders.status = new RegExp(req.params.status,"i");
   } else {
-    if(req.params.approved !==null && req.params.completed !==null){
+    if(req.params.approved !=null && req.params.completed !=null){
       queryOrders.$and = [];
       queryOrders.$and.push({ services: { $elemMatch: { date: {"$gte": moment(req.params.from).format(), "$lt": moment(req.params.to).format()}}} });
       queryOrders.$and.push({
@@ -316,7 +316,7 @@ exports.loadServicesByStatusAndPeriod = function (req, res){
     ]
   };
   var serviceQuery = 1;
-  if(req.params.approved !==null && req.params.completed !==null){
+  if(req.params.approved !=null && req.params.completed !=null){
     queryOrders.$and.push({
       services: {
         $elemMatch: {
