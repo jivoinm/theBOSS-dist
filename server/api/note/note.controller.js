@@ -45,7 +45,14 @@ exports.create = function(req, res) {
     note.posted_on = new Date();
     Note.create(note, function (err, note) {
         if(err) return res.json(400,err);
-        return res.send(note);
+        Note.findById(note._id)
+        .populate({path:'order', select:'_id po_number'})
+        .populate({path:'from', select:'_id name email'})
+        .sort({posted_on: 1})
+        .exec(function (err, notes) {
+            if(err) return res.json(400,err);
+            return res.send(notes);
+        });
     });
   }else{
     return res.send({message: 'No user is found'});

@@ -23,7 +23,9 @@ exports.index = function(req, res) {
 exports.query = function (req, res, next){
     var query = {owner: req.user.owner};
     if(req.query.role){
-        query.role = req.query.role;
+        query.role  = {
+          $in: req.query.role.split(',')
+        };
     }
 
     if(req.query.text){
@@ -66,11 +68,11 @@ exports.create = function (req, res, next) {
 exports.update = function(req, res) {
   if(req.body._id) { delete req.body._id; }
   User.findById(req.params.id, function (err, user) {
-    if (err) { return handleError(res, err); }
+    if (err) { return res.send(404); }
     if(!user) { return res.send(404); }
     var updated = _.merge(user, req.body);
     updated.save(function (err) {
-      if (err) { return handleError(res, err); }
+      if (err) { return res.send(404); }
       return res.json(200, user);
     });
   });

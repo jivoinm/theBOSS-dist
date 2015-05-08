@@ -14,6 +14,7 @@ var router = express.Router();
 
 router.get('/',auth.isAuthenticated(), controller.loadLatest);
 router.get('/services',auth.isAuthenticated(), controller.services);
+router.get('/newAndNotCompletedServices',auth.isAuthenticated(), controller.newAndNotCompletedServices);
 router.get('/unscheduled',auth.isAuthenticated(), controller.unscheduled);
 router.get('/todotasks',auth.isAuthenticated(),controller.toDoTasks);
 router.get('/shippingList',auth.isAuthenticated(),controller.shippingList);
