@@ -6,17 +6,17 @@ var Timeoff = require('./timeoff.model');
 // Get list of timeoffs
 exports.index = function(req, res) {
   var query = {};
-  if(req.query.dateFrom && req.query.dateTo){
+  if(req.param.dateFrom && req.param.dateTo){
     query.from = {
-      $gte: req.query.dateFrom
+      $gte: new Date(req.param.dateFrom)
     };
     query.to = {
-      $lte: req.query.dateTo
+      $lte: new Date(req.param.dateTo)
     };
   }
 
-  if(req.query.approved){
-    query.approved = req.query.approved;
+  if(req.param.approved){
+    query.approved = req.param.approved;
   }
 
   if(req.user.role !== "admin"){
