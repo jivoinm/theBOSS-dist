@@ -20,6 +20,7 @@ router.get('/todotasks',auth.isAuthenticated(),controller.toDoTasks);
 router.get('/shippingList',auth.isAuthenticated(),controller.shippingList);
 router.get('/accessories',auth.isAuthenticated(),controller.accessories);
 router.get('/comments',auth.isAuthenticated(),controller.comments);
+router.get('/download/:filename', controller.fileDownload);
 router.get('/:id',auth.isAuthenticated(), controller.loadOrder);
 router.get('/:id/projects',auth.isAuthenticated(), controller.loadOrderProjectFields);
 router.post('/:id/upload',auth.isAuthenticated(), controller.fileUpload);

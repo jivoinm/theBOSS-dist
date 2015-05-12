@@ -7,7 +7,7 @@ var moment = require('moment');
 var Project = require('../form/form.model');
 var User = require('../user/user.model');
 var util = require('util');
-
+var path = require('path');
 
 
 function QueryOrders(queryOrders, sort, page, limit, res) {
@@ -432,34 +432,30 @@ exports.fileUpload = function (req, res, next){
 
   // listen on part event for image file
   form.on('part', function(part){
-      if (!part.filename) return;
-      if (part.name !== 'file') return part.resume();
+      //if (!part.filename) return;
+      //if (part.name !== 'file') return part.resume();
       file = {};
       file.filename = part.filename;
       file.size = 0;
       part.on('data', function(buf){
           file.size += buf.length;
       });
-      var path = __dirname+'/../../../uploads/';
-      fs.exists(path, function (exists){
-        if(exists){
-          var out = fs.createWriteStream(path+ part.filename);
-          part.pipe(out);
-        }else{
-          fs.mkdir(path,function(){
-            var out = fs.createWriteStream(path+ part.filename);
-            part.pipe(out);
-          });
-        }
-      });
+      var pathToUpload = path.join(__dirname, '/../../../uploads/');
+      var out = fs.createWriteStream(pathToUpload+ part.filename);
+      part.pipe(out);
   });
-
 
   // parse the form
   form.parse(req);
-  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  //res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 };
 
+exports.fileDownload = function(req, res){
+  if(!req.params.filename){
+    return res.json({error: 'Missing file name'});
+  }
+  res.sendfile(req.params.filename, {root: path.join(__dirname, '/../../../uploads')}); // Set disposition and send it.
+};
 // Get list of orders
 exports.index = function(req, res) {
   Order.find(function (err, orders) {
