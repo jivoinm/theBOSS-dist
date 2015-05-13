@@ -45,6 +45,5 @@
   },
   "_source": "git://github.com/sliptree/bootstrap-tokenfield.git",
   "_target": "~0.12.1",
-  "_originalSource": "bootstrap-tokenfield",
-  "_direct": true
+  "_originalSource": "bootstrap-tokenfield"
 }
