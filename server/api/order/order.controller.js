@@ -10,10 +10,17 @@ var util = require('util');
 var path = require('path');
 
 
-function QueryOrders(queryOrders, sort, page, limit, res) {
-  var query = Order.find(queryOrders)
-      .select('customer.name po_number createdBy forms last_updated_by created_on last_updated_on date_required installation_date installation_by.name shipped_date status services doors')
-      .sort(sort);
+function QueryOrders(queryOrders, sort, page, limit, res, selectFields) {
+  var query = Order.find(queryOrders);
+  if(!selectFields){
+    query.select('customer.name po_number createdBy forms last_updated_by created_on last_updated_on date_required installation_date installation_by.name shipped_date status services doors');
+  }else{
+    query.select(selectFields);
+  }
+  if(sort){
+    query.sort(sort);
+  }
+
   if(page){
       query.skip((page * limit) - limit);
   }
@@ -137,19 +144,20 @@ exports.shippingList = function(req,res){
 };
 
 exports.accessories = function(req,res){
-  var load_all = req.query.all || false;
+  var page, limit, load_all = false;
+  if(req.query){
+      page = req.query.page;
+      limit = req.query.limit;
+      load_all = req.query.all || false;
+  }
+
+
   var query = {owner: req.user.owner};
   if(!load_all){
       query['ordered_accessories.received'] = false;
   }
 
-  Order.find(query)
-      .select('customer po_number createdBy ordered_accessories')
-      .sort({date_required: -1})
-      .exec(function(err, orders){
-          if(err) return res.json(400,err);
-          return res.send(orders);
-      });
+  new QueryOrders(query, {date_required:-1},page,limit, res,'customer po_number createdBy ordered_accessories');
 };
 
 exports.comments = function(req,res){
