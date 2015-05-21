@@ -125,7 +125,7 @@ exports.toDoTasks = function(req,res){
           '$or': [{status: 'approved'}, {status: 'in progress'}],
           'forms.tasks': {$elemMatch: {$or: [{status: {$exists:false}}, {status:'in progress'}]}}
       };
-  new QueryOrders(queryOrders, {date_required:-1},page,limit, res);
+  new QueryOrders(queryOrders, {date_required:1},page,limit, res);
 };
 
 exports.shippingList = function(req,res){
