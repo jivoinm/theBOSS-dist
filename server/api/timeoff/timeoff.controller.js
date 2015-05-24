@@ -29,6 +29,31 @@ exports.index = function(req, res) {
   });
 };
 
+exports.query = function(req, res) {
+  var query = {};
+  if(req.param.dateFrom && req.param.dateTo){
+    query.from = {
+      $gte: new Date(req.param.dateFrom)
+    };
+    query.to = {
+      $lte: new Date(req.param.dateTo)
+    };
+  }
+
+  if(req.param.approved){
+    query.approved = req.param.approved;
+  }
+
+  if(req.query.text){
+    query.detail = new RegExp(req.query.text,'i');
+  }
+
+  Timeoff.find(query, function (err, timeoffs) {
+    if(err) { return handleError(res, err); }
+    return res.json(200, timeoffs);
+  });
+};
+
 exports.totalNewTimeoffs = function(req, res) {
   var query = { approved: false};
 

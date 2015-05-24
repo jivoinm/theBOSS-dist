@@ -66,11 +66,12 @@ function updateOrder(req, res, order){
 
   var inProgress = _.any(order.forms, function (form) {
       var status = _.any(form.tasks, function (task){
-          return (task.status && task.status !== 'done');
+          return (task.status && task.status == 'in progress' || task.status == 'done');
       });
       return status;
   });
 
+  console.log('order status',inProgress, finished, order.status);
   order.status = finished ? 'finished' : inProgress ? 'in progress' : order.status;
   Order.update({_id: req.params.id}, order, {upsert: true}, function (err, nrRecords, rawRecord) {
       if(err) return res.json(400,err);
@@ -80,7 +81,7 @@ function updateOrder(req, res, order){
           return res.json(order);
       });
   });
-}
+};
 
 exports.delete = function (req, res, next) {
   new FindOrder(req, function (err, order) {
@@ -300,14 +301,15 @@ exports.loadOrdersByStatusAndPeriod = function (req, res){
      }
   }
 
-  if(req.query.text){
+  if(req.query.text && req.query.text !== ''){
       var queryText = new RegExp(req.query.text,"i");
-
+      queryOrders.$or = [];
       queryOrders.$or.push({"customer.name": queryText});
       queryOrders.$or.push({"forms.fields": {$elemMatch: {"value": queryText}}});
       queryOrders.$or.push({po_number: queryText});
       queryOrders.$or.push({'createdBy.name': queryText});
   }
+
 
   Order.find(queryOrders, {po_number: 1, customer: 1, shipped_date: 1, installation_date: 1, date_required: 1, status: 1},
     function (err, orders){
@@ -335,6 +337,16 @@ exports.loadServicesByStatusAndPeriod = function (req, res){
     });
     serviceQuery = { $elemMatch: { approved: req.params.approved, completed: req.params.completed } };
    }
+
+   if(req.query.text && req.query.text !== ''){
+       var queryText = new RegExp(req.query.text,"i");
+       queryOrders.$or = [];
+       queryOrders.$or.push({"customer.name": queryText});
+       queryOrders.$or.push({"forms.fields": {$elemMatch: {"value": queryText}}});
+       queryOrders.$or.push({po_number: queryText});
+       queryOrders.$or.push({'createdBy.name': queryText});
+   }
+
 
  Order.find(queryOrders, {po_number: 1, customer: 1, services: serviceQuery},
    function (err, orders){
