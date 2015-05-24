@@ -71,7 +71,6 @@ function updateOrder(req, res, order){
       return status;
   });
 
-  console.log('order status',inProgress, finished, order.status);
   order.status = finished ? 'finished' : inProgress ? 'in progress' : order.status;
   Order.update({_id: req.params.id}, order, {upsert: true}, function (err, nrRecords, rawRecord) {
       if(err) return res.json(400,err);
