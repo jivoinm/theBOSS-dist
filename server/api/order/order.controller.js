@@ -13,7 +13,7 @@ var path = require('path');
 function QueryOrders(queryOrders, sort, page, limit, res, selectFields) {
   var query = Order.find(queryOrders);
   if(!selectFields){
-    query.select('customer.name po_number createdBy forms last_updated_by created_on last_updated_on date_required installation_date installation_by.name shipped_date status services doors');
+    query.select('customer.name customer.ship_to customer.bill_to po_number createdBy forms last_updated_by created_on last_updated_on date_required installation_date installation_by.name shipped_date status services doors');
   }else{
     query.select(selectFields);
   }
@@ -116,8 +116,8 @@ exports.loadOrderProjectFields = function(req,res){
 exports.toDoTasks = function(req,res){
   var page, limit;
   if(req.query){
-      page = req.query.page;
-      limit = req.query.limit;
+      page = req.query.page || 1;
+      limit = req.query.limit || 25;
   }
 
   var queryOrders = {
@@ -125,7 +125,41 @@ exports.toDoTasks = function(req,res){
           '$or': [{status: 'approved'}, {status: 'in progress'}],
           'forms.tasks': {$elemMatch: {$or: [{status: {$exists:false}}, {status:'in progress'}]}}
       };
-  new QueryOrders(queryOrders, {date_required:1},page,limit, res);
+  
+  Order.aggregate({$match: queryOrders},
+      {$project: {
+          'customer.name': 1, 
+          'customer.ship_to': 1, 
+          'customer.bill_to': 1,
+          'po_number': 1,
+          'createdBy': 1, 
+          'forms': 1,
+          'last_updated_by': 1,
+          'created_on': 1, 
+          'last_updated_on': 1,
+          'date_required': { 
+              $cond: [ '$installation_date', '$installation_date', '$date_required' ]
+             },
+          'installation_by.name': 1,
+          'shipped_date': 1,
+          'status': 1,
+          'services': 1, 
+          'doors': 1
+        }},
+        {$sort: {date_required: 1}},
+        {$skip: (page * limit) - limit},
+        {$limit: (limit * 1)}
+      )
+      .exec(function(err, orders){
+          if(err) return res.json(400,err);
+           Order.count(queryOrders).exec(function (err, count) {
+                return res.json({
+                    orders: orders,
+                    page: page,
+                    totalOrders: count
+                });
+            });
+      });
 };
 
 exports.shippingList = function(req,res){

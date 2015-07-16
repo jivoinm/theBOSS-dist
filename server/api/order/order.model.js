@@ -4,7 +4,7 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 var OrderSchema = new Schema({
-    owner: String,
+    owner: {type: String, required: 'Owner is required on order'},
     createdBy: {
         user_id: {type: Schema.Types.ObjectId, ref: 'User'},
         name: String,
@@ -19,17 +19,17 @@ var OrderSchema = new Schema({
     },
     last_updated_on: {type: Date, default: Date.now},
     customer: {
-        name: String,
+        name: {type: String, required: 'Customer name is required'},
         bill_to: String,
-        ship_to: String,
+        ship_to: {type: String, required: 'Customer ship to address is required'},
         email: String,
-        phone: String,
+        phone: {type: String, required: 'Customer phone number is required'},
         cell: String,
         is_private: { type:Boolean, default:true }
     },
     status: String,
-    po_number: String,
-    date_required: Date,
+    po_number: {type: String, required: 'PO number is required'},
+    date_required: {type: Date, required: 'Order date is required'},
     installation_date: Date,
     installation_by: {
         user_id: {type: Schema.Types.ObjectId, ref: 'User'},
