@@ -125,25 +125,25 @@ exports.toDoTasks = function(req,res){
           '$or': [{status: 'approved'}, {status: 'in progress'}],
           'forms.tasks': {$elemMatch: {$or: [{status: {$exists:false}}, {status:'in progress'}]}}
       };
-  
+
   Order.aggregate({$match: queryOrders},
       {$project: {
-          'customer.name': 1, 
-          'customer.ship_to': 1, 
+          'customer.name': 1,
+          'customer.ship_to': 1,
           'customer.bill_to': 1,
           'po_number': 1,
-          'createdBy': 1, 
+          'createdBy': 1,
           'forms': 1,
           'last_updated_by': 1,
-          'created_on': 1, 
+          'created_on': 1,
           'last_updated_on': 1,
-          'date_required': { 
+          'date_required': {
               $cond: [ '$installation_date', '$installation_date', '$date_required' ]
              },
           'installation_by.name': 1,
           'shipped_date': 1,
           'status': 1,
-          'services': 1, 
+          'services': 1,
           'doors': 1
         }},
         {$sort: {date_required: 1}},
@@ -317,7 +317,6 @@ exports.loadOrdersByStatusAndPeriod = function (req, res){
   queryOrders.$or.push({ shipped_date: {"$gte": moment(req.params.from).format(), "$lt": moment(req.params.to).format()} });
 
   if(req.params.status){
-
     queryOrders.status = new RegExp(req.params.status,"i");
   } else {
     if(req.params.approved !=null && req.params.completed !=null){
@@ -344,7 +343,7 @@ exports.loadOrdersByStatusAndPeriod = function (req, res){
   }
 
 
-  Order.find(queryOrders, {po_number: 1, customer: 1, shipped_date: 1, installation_date: 1, date_required: 1, status: 1},
+  Order.find(queryOrders, {},
     function (err, orders){
       if (err) res.json(400, err);
       return res.json(orders);
