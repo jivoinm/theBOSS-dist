@@ -395,15 +395,15 @@ exports.unscheduled = function (req, res) {
 };
 
 exports.updateStatus = function (req, res){
-  Order.update({ _id: req.params.id, owner: req.user.owner},
-      {$set: {status: req.params.status}},
-      function (err){
-          if(err) return res.json(400,err);
-          new FindOrder(req, function (err, order){
-              if (err) return res.json(400, err);
-              return res.send(order);
-          });
+  Order.findOne({ _id: req.params.id, owner: req.user.owner}, function (err, order){
+      if (err) res.json(400, err);
+      order.status = req.params.status;
+      
+      order.save(function (err, orderUpdated){
+        if (err) return res.json(400, err);
+        return res.send(orderUpdated);
       });
+  });
 };
 
 exports.updateCalendarDate = function (req, res){
