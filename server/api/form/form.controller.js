@@ -125,7 +125,9 @@ exports.updateField = function (req,res){
     if(req.user){
         var field = req.body;
         var target = req.params.target;
-        var query ={};
+        var query ={
+          _id: req.params.id
+        };
         query[target+'._id'] = req.params.targetId;
         var setValue= {};
         setValue.$set = {};
@@ -134,8 +136,6 @@ exports.updateField = function (req,res){
             query,
             setValue,
            function(err,updateCount){
-                console.log('error', err);
-                console.log('updated', updateCount);
                 if(err) return res.json(400,err);
                 Form.findById(req.params.id, function (err, form) {
                     return res.send(form);
