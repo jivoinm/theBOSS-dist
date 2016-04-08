@@ -8,10 +8,11 @@ describe('GET /api/forms', function() {
 
   it('should respond with JSON array', function(done) {
     request(app)
-      .get('/api/forms')
+      .get('/api/forms/moduleid')
       .expect(200)
       .expect('Content-Type', /json/)
       .end(function(err, res) {
+        console.log(res);
         if (err) return done(err);
         res.body.should.be.instanceof(Array);
         done();

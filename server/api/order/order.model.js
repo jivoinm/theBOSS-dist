@@ -72,6 +72,9 @@ var OrderSchema = new Schema({
     }],
 
     uploaded_files: {type: Array, default: []}
+}, {
+    toObject: { virtuals: true },
+    toJSON: { virtuals: true }
 });
 
 
@@ -91,5 +94,13 @@ OrderSchema.statics.queryOrders = function (query, sort, populate,limit) {
     findExec.select('customer.name po_number createdBy.name created_on date_required status');
     return findExec.exec();
 };
+
+OrderSchema.virtual('doorsSelection').get( function(){
+  return this.doors ? this.doors :
+        (this.forms &&
+        this.forms.length>0 &&
+        this.forms[0].fields &&
+        this.forms[0].fields.length > 0 ? this.forms[0].fields[0].value : '');
+});
 
 module.exports = mongoose.model('Order', OrderSchema);

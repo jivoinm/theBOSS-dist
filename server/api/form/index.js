@@ -17,6 +17,7 @@ router.post('/', auth.isAuthenticated(), controller.createOrUpdate);
 router.post('/:id', auth.isAuthenticated(), controller.createOrUpdate);
 router.delete('/:id', auth.isAuthenticated(), controller.deleteForm);
 router.get('/:module', auth.isAuthenticated(), controller.getFormsForModule);
+router.get('/:module/:required', auth.isAuthenticated(), controller.getDefaultFormsForModule);
 router.put('/:id/:target', auth.isAuthenticated(), controller.addField);
 router.put('/:id/:target/:targetId', auth.isAuthenticated(), controller.updateField);
 router.delete('/:id/field/:fieldId', auth.isAuthenticated(), controller.deleteField);

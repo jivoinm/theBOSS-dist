@@ -66,7 +66,7 @@ function updateOrder(req, res, order){
 
   var inProgress = _.any(order.forms, function (form) {
       var status = _.any(form.tasks, function (task){
-          return (task.status && task.status == 'in progress' || task.status == 'done');
+          return (task.status && task.status === 'in progress' || task.status === 'done');
       });
       return status;
   });
@@ -80,7 +80,7 @@ function updateOrder(req, res, order){
           return res.json(order);
       });
   });
-};
+}
 
 exports.delete = function (req, res, next) {
   new FindOrder(req, function (err, order) {
@@ -186,7 +186,16 @@ exports.accessories = function(req,res){
   }
 
 
-  var query = {owner: req.user.owner};
+  var query = {
+    owner: req.user.owner,
+    ordered_accessories: {
+      $elemMatch: {
+        quantity: {$exists: true},
+        from_manufacturer: {$exists: true}
+      }
+    }
+
+  };
   if(!load_all){
       query['ordered_accessories.received'] = false;
   }
@@ -223,11 +232,11 @@ exports.loadLatest = function (req, res) {
           owner: req.user.owner
       };
 
-      var page, limit;
+      var page, limit, sort;
       if(req.query){
           if(req.query.text){
               var queryText = new RegExp(req.query.text,"i");
-              queryOrders.$or = [{"customer.name": queryText},
+              queryOrders.$or = [{"customer.name": queryText},{"customer.ship_to": queryText},
               {"forms.fields": {$elemMatch: {"value": queryText}}},
               {po_number: queryText},
               {'createdBy.name': queryText},
@@ -236,11 +245,15 @@ exports.loadLatest = function (req, res) {
           if(req.query.status){
               queryOrders.status = new RegExp(req.query.status,"i");
           }
+          if(req.query.date_required){
+            queryOrders.date_required = {"$gte": req.query.date_required, "$lt": moment(req.query.date_required).add(1,'d')};
+          }
           page = req.query.page;
           limit = req.query.limit;
+          sort = req.query.sort || {date_required:-1};
       }
 
-      new QueryOrders(queryOrders, {date_required:-1},page,limit, res);
+      new QueryOrders(queryOrders, sort, page,limit, res);
   }
 };
 
@@ -251,22 +264,24 @@ exports.services = function (req, res) {
       };
 
       var page, limit;
-      if(req.query){
-          if(req.query.text){
-              var queryText = new RegExp(req.query.text,"i");
-              queryOrders.$or = [{"customer.name": queryText},
-              {"forms.fields": {$elemMatch: {"value": queryText}}},
-              {po_number: queryText},
-              {'createdBy.name': queryText},
+      if(req.query) {
+          if(req.query.text) {
+              var queryText = new RegExp(req.query.text, "i");
+              queryOrders.$or = [
+                {"customer.name": queryText},{"customer.ship_to": queryText},
+                { "forms.fields": { $elemMatch: {"value": queryText} }},
+                { po_number: queryText },
+                { 'createdBy.name': queryText },
               ];
           }
-          if(req.query.status){
+
+          if(req.query.status) {
               queryOrders.services = {
                 $elemMatch: {
                   completed: req.query.status === 'finished'
                 }
               };
-          }else{
+          } else {
             if(req.query.approved){
               queryOrders.services = {
                 $elemMatch: {
@@ -274,7 +289,7 @@ exports.services = function (req, res) {
                   completed: false
                 }
               };
-            }else{
+          } else {
               queryOrders.services = {
                 $exists: true
               };
@@ -294,11 +309,35 @@ exports.newAndNotCompletedServices = function (req, res) {
    { $match: {$or: [
      { services: { $elemMatch: { approved: false, completed: false }}},
      { services: { $elemMatch: { approved: true, completed: false }}}
-     ]
+   ],
+   owner: req.user.owner
      }
   },
   { $unwind: '$services'},
   { $match: { $or: [{'services.approved': true, 'services.completed': false}, {'services.approved': false, 'services.completed': false}] }},
+  { $group: {_id: '$_id', po_number: { '$first': '$po_number' }, customer: {'$first': '$customer'} , services: {$push: '$services'}}}
+  ],
+  function(err, orders){
+        if (err) res.json(400, err);
+        return res.json(orders);
+  });
+};
+
+exports.newAndNotCompletedServicesOlderThanTwoWeeks = function (req, res) {
+ Order.aggregate([
+   { $match: {$or: [
+     { services: { $elemMatch: { approved: false, completed: false }}},
+     { services: { $elemMatch: { approved: true, completed: false }}}
+    ],
+    services: {$elemMatch: { date: { $lte: new Date(+new Date() - 12096e5)}}},
+    owner: req.user.owner
+   }
+  },
+  { $unwind: '$services'},
+  { $match: { $or: [{'services.approved': true, 'services.completed': false}, {'services.approved': false, 'services.completed': false}],
+              'services.date': { $lte: new Date(+new Date() - 12096e5)}
+            }
+  },
   { $group: {_id: '$_id', po_number: { '$first': '$po_number' }, customer: {'$first': '$customer'} , services: {$push: '$services'}}}
   ],
   function(err, orders){
@@ -319,7 +358,7 @@ exports.loadOrdersByStatusAndPeriod = function (req, res){
   if(req.params.status){
     queryOrders.status = new RegExp(req.params.status,"i");
   } else {
-    if(req.params.approved !=null && req.params.completed !=null){
+    if(req.params.approved && req.params.completed){
       queryOrders.$and = [];
       queryOrders.$and.push({ services: { $elemMatch: { date: {"$gte": moment(req.params.from).format(), "$lt": moment(req.params.to).format()}}} });
       queryOrders.$and.push({
@@ -337,6 +376,7 @@ exports.loadOrdersByStatusAndPeriod = function (req, res){
       var queryText = new RegExp(req.query.text,"i");
       queryOrders.$or = [];
       queryOrders.$or.push({"customer.name": queryText});
+      queryOrders.$or.push({"customer.ship_to": queryText});
       queryOrders.$or.push({"forms.fields": {$elemMatch: {"value": queryText}}});
       queryOrders.$or.push({po_number: queryText});
       queryOrders.$or.push({'createdBy.name': queryText});
@@ -358,7 +398,7 @@ exports.loadServicesByStatusAndPeriod = function (req, res){
     ]
   };
   var serviceQuery = 1;
-  if(req.params.approved !=null && req.params.completed !=null){
+  if(req.params.approved !== null && req.params.completed !== null){
     queryOrders.$and.push({
       services: {
         $elemMatch: {
@@ -374,6 +414,7 @@ exports.loadServicesByStatusAndPeriod = function (req, res){
        var queryText = new RegExp(req.query.text,"i");
        queryOrders.$or = [];
        queryOrders.$or.push({"customer.name": queryText});
+       queryOrders.$or.push({"customer.ship_to": queryText});
        queryOrders.$or.push({"forms.fields": {$elemMatch: {"value": queryText}}});
        queryOrders.$or.push({po_number: queryText});
        queryOrders.$or.push({'createdBy.name': queryText});
@@ -398,7 +439,7 @@ exports.updateStatus = function (req, res){
   Order.findOne({ _id: req.params.id, owner: req.user.owner}, function (err, order){
       if (err) res.json(400, err);
       order.status = req.params.status;
-      
+
       order.save(function (err, orderUpdated){
         if (err) return res.json(400, err);
         return res.send(orderUpdated);

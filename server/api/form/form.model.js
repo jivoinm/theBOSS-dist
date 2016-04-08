@@ -9,7 +9,8 @@ var FieldSchema = new Schema({
     type: String,
     value: String,
     require: Boolean,
-    show_options: String
+    show_options: String,
+    show_when: String
 });
 
 
@@ -17,6 +18,7 @@ var FormSchema = new Schema({
     owner: String,
     formName: String,
     module: String,
+    required: Boolean,
     fields: [FieldSchema],
     tasks: [
         {
@@ -32,8 +34,8 @@ var FormSchema = new Schema({
 
 FormSchema
     .path('formName')
-    .validate(function (form_name) {
-        return form_name.length;
+    .validate(function (form_name, respond) {
+        return form_name.length ? respond(true) : respond(false);
     }, 'The specified project name cannot be blank.');
 
 //validate name not already exists
@@ -48,7 +50,7 @@ FormSchema
                 if (self._id === form._id) return respond(true);
                 return respond(false);
             }
-            respond(true);
+            return respond(true);
         });
     }, 'The specified project name is already exist on the same owner.');
 
