@@ -398,7 +398,7 @@ exports.loadServicesByStatusAndPeriod = function (req, res){
     ]
   };
   var serviceQuery = 1;
-  if(req.params.approved !== null && req.params.completed !== null){
+  if(req.params.approved && req.params.completed){
     queryOrders.$and.push({
       services: {
         $elemMatch: {
