@@ -18,6 +18,7 @@ function onConnect(socket) {
   });
 
   // Insert sockets below
+  require('../api/user_group/user_group.socket').register(socket);
   require('../api/timeoff/timeoff.socket').register(socket);
   require('../api/time-off/time-off.socket').register(socket);
   require('../api/note/note.socket').register(socket);

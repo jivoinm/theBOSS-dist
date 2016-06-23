@@ -5,13 +5,6 @@ var controller = require('./order.controller');
 var auth = require('../../auth/auth.service');
 var router = express.Router();
 
-// router.get('/', controller.index);
-// router.get('/:id', controller.show);
-// router.post('/', controller.create);
-// router.put('/:id', controller.update);
-// router.patch('/:id', controller.update);
-// router.delete('/:id', controller.destroy);
-
 router.get('/',auth.isAuthenticated(), controller.loadLatest);
 router.get('/services',auth.isAuthenticated(), controller.services);
 router.get('/newAndNotCompletedServices',auth.isAuthenticated(), controller.newAndNotCompletedServices);
@@ -31,6 +24,8 @@ router.delete('/:id',auth.isAuthenticated(), controller.delete);
 router.patch('/:id/status/:status',auth.isAuthenticated(), controller.updateStatus);
 router.patch('/:id/calendar_update_date/:property/:date',auth.isAuthenticated(), controller.updateCalendarDate);
 router.get('/calendar/:from/:to',auth.isAuthenticated(),controller.loadOrdersByStatusAndPeriod);
+router.get('/calendar/:from/:to/otherGroupOrders',auth.isAuthenticated(),controller.loadOtherGroupOrdersByStatusAndPeriod);
+router.get('/calendar/:from/:to/otherGroupServices',auth.isAuthenticated(),controller.loadOtherGroupServicesByStatusAndPeriod);
 router.get('/calendar/:from/:to/orders',auth.isAuthenticated(),controller.loadOrdersByStatusAndPeriod);
 router.get('/calendar/:from/:to/orders/:status',auth.isAuthenticated(),controller.loadOrdersByStatusAndPeriod);
 router.get('/calendar/:from/:to/services',auth.isAuthenticated(),controller.loadServicesByStatusAndPeriod);

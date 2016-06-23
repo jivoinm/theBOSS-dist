@@ -15,7 +15,7 @@
     "tag": "v0.6.1",
     "commit": "f4ded22ed2be9d07e4022d12f463aefb3b51a68b"
   },
-  "_source": "git://github.com/btford/angular-socket-io.git",
+  "_source": "https://github.com/btford/angular-socket-io.git",
   "_target": "~0.6.0",
   "_originalSource": "angular-socket-io"
 }

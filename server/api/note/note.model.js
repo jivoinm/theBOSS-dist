@@ -5,6 +5,13 @@ var mongoose = require('mongoose'),
 
 var NoteSchema = new Schema({
     owner: String,
+    createdBy: {
+        user_id: {type: Schema.Types.ObjectId, ref: 'User'},
+        name: String,
+        email: String,
+        role: String,
+        groups: String
+    },
     order: {type: Schema.Types.ObjectId, ref: 'Order'},
     resolved: {type:Boolean, default:false},
     resolved_by: {type: Schema.Types.ObjectId, ref: 'User'},

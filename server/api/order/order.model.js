@@ -5,10 +5,13 @@ var mongoose = require('mongoose'),
 
 var OrderSchema = new Schema({
     owner: {type: String, required: 'Owner is required on order'},
+    group: String,
     createdBy: {
         user_id: {type: Schema.Types.ObjectId, ref: 'User'},
         name: String,
-        email: String
+        email: String,
+        role: String,
+        groups: [String]
     },
     doors: String,
     created_on: {type: Date, default: Date.now},

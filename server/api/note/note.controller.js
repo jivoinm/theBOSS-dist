@@ -11,6 +11,11 @@ exports.index = function(req, res) {
         query.resolved = req.query.resolved;
     }
 
+   if(req.user.groups && req.user.groups.length > 0){
+        query['createdBy.groups'] = {$in: req.user.groups};
+      }
+
+
     if(req.query.orderid){
         query.order = req.query.orderid;
     }
@@ -43,6 +48,13 @@ exports.create = function(req, res) {
     note.from = req.user._id;
     note.owner = req.user.owner;
     note.posted_on = new Date();
+    note.createdBy = {
+          user_id: req.user._id,
+          name: req.user.name,
+          email: req.user.email,
+          role: req.user.role,
+          groups: req.user.groups
+      };
     Note.create(note, function (err, note) {
         if(err) return res.json(400,err);
         Note.findById(note._id)

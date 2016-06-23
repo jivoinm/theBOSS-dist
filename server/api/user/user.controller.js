@@ -28,12 +28,23 @@ exports.query = function (req, res, next){
         };
     }
 
+
+    if(req.query.group){
+        query.groups  = {
+          $in: req.query.group.split(',')
+        };
+    }
+
+    if(req.user.group){
+      query.group = req.user.group;
+    }
+
     if(req.query.text){
         var queryText = new RegExp(req.query.text,"i");
         query.name = queryText;
     }
 
-    User.find(query, '-salt -hashedPassword',{sort:{name:1}}, function(err, users){
+    User.find(query, '-salt -hashedPassword',{sort: {name: 1, owner: 1}}, function(err, users){
         if (err) return res.send(400);
         return res.send(users);
     });
@@ -42,6 +53,18 @@ exports.query = function (req, res, next){
 exports.updateRole = function (req, res, next) {
   User.update({ _id: req.params.id, owner: req.user.owner},
     {$set: {role: req.params.role}},
+    function (err){
+        if(err) res.json(400,err);
+        User.findById(req.params.id, function (err, user){
+            if (err) return res.json(400, err);
+            return res.send(user);
+        });
+    });
+};
+
+exports.updateGroups = function (req, res, next) {
+  User.update({ _id: req.params.id, owner: req.user.owner},
+    {$set: {groups: req.body.groups}},
     function (err){
         if(err) res.json(400,err);
         User.findById(req.params.id, function (err, user){
@@ -121,6 +144,28 @@ exports.changePassword = function(req, res, next) {
     }
   });
 };
+
+/**
+*Reset user password
+*/
+exports.resetPassword = function(req, res){
+  var userId = req.body._id;
+  var newPass = String(req.body.newPassword);
+  if(!newPass) {
+    res.send(403);
+    return;
+  }
+
+  User.findById(userId, function (err, user) {
+    user.password = newPass;
+    user.save(function(err) {
+      if (err) return validationError(res, err);
+      res.send(200);
+
+    });
+  });
+};
+
 
 /**
  * Get my info

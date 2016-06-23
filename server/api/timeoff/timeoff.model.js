@@ -12,7 +12,8 @@ var TimeoffSchema = new Schema({
   createdBy: {
       user_id: {type: Schema.Types.ObjectId, ref: 'User'},
       name: String,
-      email: String
+      email: String,
+      group: String
   }
 });
 
