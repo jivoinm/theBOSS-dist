@@ -132,7 +132,7 @@ exports.toDoTasks = function(req,res){
     queryOrders['group'] = {$in: req.user.groups};
   }
 
-  
+
   Order.aggregate({$match: queryOrders},
       {$project: {
           'customer.name': 1,
@@ -269,14 +269,14 @@ exports.loadLatest = function (req, res) {
           }
           if(req.query.date_required){
             queryOrders.date_required = {
-              '$gte': new Date(moment(req.query.date_required).format('YYYY-MM-DD')), 
+              '$gte': new Date(moment(req.query.date_required).format('YYYY-MM-DD')),
               '$lt': new Date(moment(req.query.date_required).add(1,'d').format('YYYY-MM-DD'))};
           }
           page = req.query.page;
           limit = req.query.limit;
           sort = req.query.sort || {date_required:-1};
       }
-      
+
       new QueryOrders(queryOrders, sort, page,limit, res);
   }
 };
@@ -370,7 +370,7 @@ exports.newAndNotCompletedServicesOlderThanTwoWeeks = function (req, res) {
   if(req.user.groups && req.user.groups.length > 0){
     match.$match['group'] = {$in: req.user.groups};
   }
- 
+
  Order.aggregate([ match,
   { $unwind: '$services'},
   { $match: { $or: [{'services.approved': true, 'services.completed': false}, {'services.approved': false, 'services.completed': false}],
@@ -444,21 +444,21 @@ exports.loadOtherGroupOrdersByStatusAndPeriod = function (req, res){
   }
 
   queryOrders.$or.push({installation_date: {
-    '$gte': new Date(req.params.from), 
+    '$gte': new Date(req.params.from),
     '$lt': new Date(req.params.to)
   }});
   queryOrders.$or.push({date_required: {
-    '$gte': new Date(req.params.from), 
+    '$gte': new Date(req.params.from),
     '$lt': new Date(req.params.to)
   }});
-  
+
   //console.log(queryOrders);
   Order.aggregate(
-    {$match: queryOrders}, 
+    {$match: queryOrders},
     {$project: {
-                date_required_day: { $dayOfMonth: {$ifNull: ['$installation_date', '$date_required']}},
-                date_required_month: { $month: {$ifNull: ['$installation_date', '$date_required']}},
-                date_required_year: { $year: {$ifNull: ['$installation_date', '$date_required']}}
+                date_required_day: { $dayOfMonth: [{$ifNull: ['$installation_date', '$date_required']}]},
+                date_required_month: { $month: [{$ifNull: ['$installation_date', '$date_required']}]},
+                date_required_year: { $year: [{$ifNull: ['$installation_date', '$date_required']}]}
             }
     },
     {
@@ -466,11 +466,11 @@ exports.loadOtherGroupOrdersByStatusAndPeriod = function (req, res){
             _id: {
                 year: '$date_required_year',
                 month: '$date_required_month',
-                day: '$date_required_day'    
+                day: '$date_required_day'
                 },
                 totalProjects: {$sum: 1}
             }
-            
+
     },
     {'$sort': {date: 1}})
   .exec(function (err, orders){
@@ -489,13 +489,13 @@ exports.loadOtherGroupServicesByStatusAndPeriod = function (req, res){
   }
 
   queryOrders['services.date'] = {
-      '$gte': new Date(req.params.from), 
+      '$gte': new Date(req.params.from),
       '$lt': new Date(req.params.to)
     };
-  
+
   Order.aggregate(
     {$unwind: '$services'},
-    {$match: queryOrders},     
+    {$match: queryOrders},
     {$project: {
             day: { $dayOfMonth: '$services.date'},
             month: { $month: '$services.date'},
@@ -527,7 +527,7 @@ exports.loadServicesByStatusAndPeriod = function (req, res){
   }
 
   queryOrders['services.date'] = {
-      '$gte': new Date(req.params.from), 
+      '$gte': new Date(req.params.from),
       '$lt': new Date(req.params.to)
     };
 
@@ -543,7 +543,7 @@ exports.loadServicesByStatusAndPeriod = function (req, res){
     });
     serviceQuery = { $elemMatch: { approved: req.params.approved, completed: req.params.completed } };
    }
-  
+
   Order.find(queryOrders, {po_number: 1, customer: 1, services: serviceQuery},
    function (err, orders){
      if (err) res.json(400, err);
