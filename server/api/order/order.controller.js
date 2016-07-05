@@ -251,7 +251,10 @@ exports.loadLatest = function (req, res) {
       };
 
       if(req.user.groups && req.user.groups.length > 0 && !req.query.date_required){
-        queryOrders['group'] = {$in: req.user.groups};
+        queryOrders.$or = [
+          {group: {$in: req.user.groups}},
+          {'createdBy.user_id': req.user._id}
+          ];
       }
 
       var page, limit, sort;
@@ -288,7 +291,10 @@ exports.services = function (req, res) {
       };
 
       if(req.user.groups && req.user.groups.length > 0){
-        queryOrders['group'] = {$in: req.user.groups};
+         queryOrders.$or = [
+          {group: {$in: req.user.groups}},
+          {'createdBy.user_id': req.user._id}
+          ];
       }
 
       var page, limit;
@@ -386,15 +392,18 @@ exports.newAndNotCompletedServicesOlderThanTwoWeeks = function (req, res) {
 };
 
 exports.loadOrdersByStatusAndPeriod = function (req, res){
-  var queryOrders = {
+  var queryOrders = {};
+  queryOrders.$or = [];
+  queryOrders.$and = [{
       owner: req.user.owner,
-  };
-
+  }];
   if(req.user.groups && req.user.groups.length > 0){
-      queryOrders['group'] = {$in: req.user.groups};
+       queryOrders.$and = [{$or: [
+          {group: {$in: req.user.groups}},
+          {'createdBy.user_id': req.user._id}]}
+          ];
   }
 
-  queryOrders.$or = [];
   queryOrders.$or.push({ date_required: {'$gte': moment(req.params.from).format(), '$lt': moment(req.params.to).format()} });
   queryOrders.$or.push({ installation_date: {'$gte': moment(req.params.from).format(), '$lt': moment(req.params.to).format()} });
   queryOrders.$or.push({ shipped_date: {'$gte': moment(req.params.from).format(), '$lt': moment(req.params.to).format()} });
@@ -403,7 +412,7 @@ exports.loadOrdersByStatusAndPeriod = function (req, res){
     queryOrders.status = new RegExp(req.params.status,'i');
   } else {
     if(req.params.approved && req.params.completed){
-      queryOrders.$and = [];
+
       queryOrders.$and.push({ services: { $elemMatch: { date: {'$gte': moment(req.params.from).format(), '$lt': moment(req.params.to).format()}}} });
       queryOrders.$and.push({
         services: {
@@ -440,7 +449,8 @@ exports.loadOtherGroupOrdersByStatusAndPeriod = function (req, res){
   queryOrders.$and.push({owner: req.user.owner});
 
   if(req.user.groups && req.user.groups.length > 0){
-      queryOrders.$and.push({group: { $not: { $in: [req.user.groups]} }});
+     queryOrders.group = { $not: {$in: req.user.groups }};
+     queryOrders['createdBy.user_id'] = { $not: {$eq: req.user._id }};
   }
 
   queryOrders.$or.push({installation_date: {
@@ -452,7 +462,7 @@ exports.loadOtherGroupOrdersByStatusAndPeriod = function (req, res){
     '$lt': new Date(req.params.to)
   }});
 
-  //console.log(queryOrders);
+
   Order.aggregate(
     {$match: queryOrders},
     {$project: {
@@ -485,7 +495,8 @@ exports.loadOtherGroupServicesByStatusAndPeriod = function (req, res){
   };
 
   if(req.user.groups && req.user.groups.length > 0){
-      queryOrders.group = { $not: { $in: [req.user.groups]} };
+     queryOrders.group = { $not: {$in: req.user.groups }};
+     queryOrders['createdBy.user_id'] = { $not: {$eq: req.user._id }};
   }
 
   queryOrders['services.date'] = {
@@ -523,7 +534,10 @@ exports.loadServicesByStatusAndPeriod = function (req, res){
   };
 
   if(req.user.groups && req.user.groups.length > 0){
-      queryOrders.group = { $in: [req.user.groups] };
+       queryOrders.$or = [
+          {group: {$in: req.user.groups}},
+          {'createdBy.user_id': req.user._id}
+          ];
   }
 
   queryOrders['services.date'] = {
@@ -618,7 +632,6 @@ exports.updateOrder = function(req,res){
       var order = req.body;
 
       delete order._id;
-      delete order.createdBy;
 
       if(order.installation_by && order.installation_by._id){
         var installedBy = User.findById(order.installation_by._id, function (err, user){
