@@ -8,7 +8,7 @@ var Project = require('../form/form.model');
 var User = require('../user/user.model');
 var util = require('util');
 var path = require('path');
-
+var aws = require('aws-sdk');
 
 function QueryOrders(queryOrders, sort, page, limit, res, selectFields) {
   var query = Order.find(queryOrders);
@@ -683,6 +683,34 @@ exports.fileUpload = function (req, res, next){
   form.parse(req);
   //res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
 };
+
+exports.signs3 = function(req, res, next){
+  var S3_BUCKET = process.env.S3_BUCKET;
+  var s3 = new aws.S3();
+  var fileName = req.query['file-name'];
+  var fileType = req.query['file-type'];
+  var s3Params = {
+    Bucket: S3_BUCKET,
+    Key: fileName,
+    Expires: 60,
+    ContentType: fileType,
+    ACL: 'public-read'
+  };
+
+  s3.getSignedUrl('putObject', s3Params, (err, data) => {
+    if(err){
+      console.log(err);
+      return res.end();
+    }
+    var returnData = {
+      signedRequest: data,
+      url: `https://${S3_BUCKET}.s3.amazonaws.com/${fileName}`
+    };
+    res.write(JSON.stringify(returnData));
+    res.end();
+  });
+};
+
 
 exports.fileDownload = function(req, res){
   if(!req.params.filename){
