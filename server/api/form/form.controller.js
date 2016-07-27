@@ -145,9 +145,11 @@ exports.updateField = function (req,res){
           _id: req.params.id
         };
         query[target+'._id'] = req.params.targetId;
+
         var setValue= {};
         setValue.$set = {};
-        setValue.$set[target + '.$'] = field;
+        setValue.$set[target+'.$'] = field;
+
         Form.update(
             query,
             setValue,
