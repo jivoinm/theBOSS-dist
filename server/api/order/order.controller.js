@@ -11,6 +11,10 @@ var path = require('path');
 
 function QueryOrders(queryOrders, sort, page, limit, res, selectFields) {
   var query = Order.find(queryOrders);
+  if(limit){
+    limit = parseInt(limit);
+  }
+
   if(!selectFields){
     query.select('group customer.name customer.ship_to customer.bill_to po_number createdBy forms last_updated_by created_on last_updated_on date_required installation_date installation_by.name shipped_date status services doors');
   }else{
